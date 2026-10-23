@@ -1,172 +1,201 @@
 // src/components/ui/cinematic-landing-hero.tsx
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
-import { Phone, ArrowRight, Mic, MicOff, Volume2, Check } from "lucide-react";
+import { Phone, ArrowRight, Mic, MicOff, Volume2, Check, ChevronRight } from "lucide-react";
 import { usePriyaCall } from "../usePriyaCall";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-const INJECTED_STYLES = `
-  .gsap-reveal { visibility: hidden; }
+interface SlideToActionButtonProps {
+  label: string;
+  isLive?: boolean;
+  disabled?: boolean;
+  onTrigger: () => void;
+}
 
-  .bg-grid-theme {
-      background-size: 50px 50px;
-      background-image: 
-          linear-gradient(to right, rgba(124, 58, 237, 0.06) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(124, 58, 237, 0.06) 1px, transparent 1px);
-      mask-image: radial-gradient(ellipse at center, black 0%, transparent 72%);
-      -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 72%);
-  }
+function SlideToActionButton({
+  label,
+  isLive = false,
+  disabled = false,
+  onTrigger,
+}: SlideToActionButtonProps) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [dragX, setDragX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const startXRef = useRef(0);
+  const currentDragRef = useRef(0);
+  const maxDragRef = useRef(140);
+  const dragDistanceRef = useRef(0);
 
-  .text-3d-matte {
-      color: #20283d;
-      text-shadow: 
-          0 10px 24px rgba(124, 58, 237, 0.12), 
-          0 2px 4px rgba(32, 40, 61, 0.08);
-  }
+  const updateBounds = useCallback(() => {
+    if (trackRef.current) {
+      const trackWidth = trackRef.current.clientWidth;
+      const thumbWidth = 36;
+      const padding = 8; // 4px each side
+      maxDragRef.current = Math.max(0, trackWidth - thumbWidth - padding);
+    }
+  }, []);
 
-  .text-silver-matte {
-      background: linear-gradient(180deg, #544370 0%, #7c3aed 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-  }
+  useEffect(() => {
+    updateBounds();
+    window.addEventListener("resize", updateBounds);
+    return () => window.removeEventListener("resize", updateBounds);
+  }, [updateBounds]);
 
-  .text-card-silver-matte {
-      background: linear-gradient(180deg, #3b2064 0%, #6d28d9 55%, #9333ea 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      filter: drop-shadow(0px 4px 10px rgba(124, 58, 237, 0.15));
-  }
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (disabled || isCompleted) return;
+    updateBounds();
+    setIsDragging(true);
+    startXRef.current = e.clientX;
+    dragDistanceRef.current = 0;
+    currentDragRef.current = 0;
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      // fallback
+    }
+  };
 
-  /* Mix of Light Purple and Soft Lavender Depth Card */
-  .premium-depth-card {
-      background: linear-gradient(145deg, #faf7fe 0%, #f1eafc 50%, #e6dcf9 100%);
-      box-shadow: 
-          0 24px 60px -15px rgba(124, 58, 237, 0.14),
-          0 10px 24px -10px rgba(78, 55, 128, 0.08),
-          inset 0 1px 2px rgba(255, 255, 255, 0.9);
-      border: 1px solid rgba(168, 85, 247, 0.22);
-      position: relative;
-  }
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging || disabled || isCompleted) return;
+    const delta = e.clientX - startXRef.current;
+    dragDistanceRef.current = Math.abs(delta);
+    const clamped = Math.min(Math.max(0, delta), maxDragRef.current);
+    currentDragRef.current = clamped;
+    setDragX(clamped);
+  };
 
-  .card-sheen {
-      position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 50;
-      background: radial-gradient(650px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.35) 0%, transparent 40%);
-      mix-blend-mode: overlay; transition: opacity 0.3s ease;
-  }
+  const triggerActivation = () => {
+    setIsCompleted(true);
+    setDragX(maxDragRef.current);
+    onTrigger();
+    setTimeout(() => {
+      setIsCompleted(false);
+      setDragX(0);
+      currentDragRef.current = 0;
+    }, 600);
+  };
 
-  .iphone-bezel {
-      background-color: #ffffff;
-      box-shadow: 
-          inset 0 0 0 2px #e9e4f5, 
-          inset 0 0 0 6px #f3eefb, 
-          0 25px 60px -10px rgba(124, 58, 237, 0.18),
-          0 10px 20px -5px rgba(32, 24, 60, 0.08);
-      transform-style: preserve-3d;
-  }
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isDragging) return;
+    setIsDragging(false);
 
-  .screen-glare {
-      background: linear-gradient(110deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 40%);
-  }
+    try {
+      if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId)) {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      // fallback
+    }
 
-  .btn-modern-light {
-      background: linear-gradient(180deg, #FFFFFF 0%, #F5F3FF 100%);
-      color: #20283d;
-      box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.15), 0 2px 4px rgba(0,0,0,0.06), 0 10px 20px -4px rgba(124, 58, 237, 0.15);
-      transition: all 0.25s ease;
-  }
-  .btn-modern-light:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.28), 0 6px 14px -2px rgba(124, 58, 237, 0.25);
-  }
+    const threshold = maxDragRef.current * 0.48;
+    if (currentDragRef.current >= threshold || dragDistanceRef.current < 6) {
+      triggerActivation();
+    } else {
+      setDragX(0);
+      currentDragRef.current = 0;
+    }
+  };
 
-  .btn-modern-dark {
-      background: linear-gradient(180deg, #24212c 0%, #17141b 100%);
-      color: #FFFFFF;
-      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15), 0 3px 5px rgba(32, 23, 40, 0.15), 0 10px 24px -4px rgba(32, 23, 40, 0.3);
-      transition: all 0.25s ease;
-  }
-  .btn-modern-dark:hover {
-      transform: translateY(-2px);
-      background: linear-gradient(180deg, #373342 0%, #24212c 100%);
-      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
-  }
+  const handlePointerCancel = () => {
+    setIsDragging(false);
+    setDragX(0);
+    currentDragRef.current = 0;
+  };
 
-  /* Light Purple & Lavender Priya Phone Screen */
-  .priya-phone-bg {
-      background: linear-gradient(180deg, #fcfbff 0%, #f4eeff 55%, #eadefe 100%);
-  }
+  const progress = maxDragRef.current > 0 ? dragX / maxDragRef.current : 0;
+  const labelOpacity = Math.max(0.08, 1 - progress * 1.6);
 
-  .priya-answer-btn {
-      --call-icon-size: 38px;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 48px;
-      padding: 0;
-      border: 1px solid #a78aff;
-      border-radius: 60px;
-      background: rgba(255, 255, 255, 0.85);
-      color: #17141b;
-      font-size: 13px;
-      font-weight: 600;
-      line-height: 1.2;
-      transition: background .2s, box-shadow .2s, transform .15s;
-      cursor: pointer;
-      user-select: none;
-      backdrop-filter: blur(10px);
-  }
-  .priya-answer-btn:hover {
-      background: #ffffff;
-      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.2);
-  }
-  .priya-answer-btn:active {
-      transform: scale(0.98);
-  }
-  .priya-answer-btn[aria-pressed='true'] {
-      border-color: #f43f5e;
-      background: #fff1f2;
-      color: #be123c;
-  }
-  .priya-answer-btn[aria-pressed='true'] .priya-phone-icon {
-      color: #e11d48;
-      transform: rotate(135deg);
-  }
-  .priya-phone-icon {
-      position: absolute;
-      left: 6px;
-      top: calc(50% - var(--call-icon-size) / 2);
-      width: var(--call-icon-size);
-      height: var(--call-icon-size);
-      display: grid;
-      place-items: center;
-      border-radius: 100%;
-      background: white;
-      color: #7c3aed;
-      box-shadow: 0 2px 5px rgba(37, 32, 54, 0.2);
-      transition: transform .2s, color .2s;
-  }
-  .priya-wave-bar {
-      width: 2px;
-      height: 12px;
-      background: #7c3aed;
-      border-radius: 4px;
-      animation: voiceWavePulse .7s ease-in-out infinite alternate;
-  }
-  @keyframes voiceWavePulse {
-      to { transform: scaleY(0.3); }
-  }
-`;
+  return (
+    <div
+      ref={trackRef}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled}
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && !disabled && !isCompleted) {
+          e.preventDefault();
+          triggerActivation();
+        }
+      }}
+      className={cn(
+        "relative w-full h-[46px] rounded-full overflow-hidden select-none touch-none transition-all duration-200 border cursor-pointer",
+        isLive
+          ? "bg-rose-50/90 border-rose-300 shadow-[0_2px_10px_rgba(244,63,94,0.15)]"
+          : "bg-white/85 border-[#a78aff]/70 shadow-[0_2px_12px_rgba(124,58,237,0.12)]",
+        disabled && "opacity-60 cursor-not-allowed"
+      )}
+    >
+      {/* Dynamic progress track fill behind thumb */}
+      <div
+        className={cn(
+          "absolute inset-y-0 left-0 pointer-events-none transition-all",
+          isLive
+            ? "bg-gradient-to-r from-rose-200/70 to-rose-300/80"
+            : "bg-gradient-to-r from-purple-200/70 to-violet-300/80"
+        )}
+        style={{
+          width: `${dragX + 36}px`,
+        }}
+      />
+
+      {/* Centered label and directional chevrons */}
+      <div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none pl-6 pr-2 transition-opacity duration-150"
+        style={{ opacity: labelOpacity }}
+      >
+        <span
+          className={cn(
+            "text-[12px] sm:text-[12.5px] font-semibold tracking-tight transition-colors",
+            isLive ? "text-rose-700 font-bold" : "text-violet-950"
+          )}
+        >
+          {label}
+        </span>
+        {!disabled && !isLive && (
+          <div className="flex items-center -space-x-1 ml-1.5 opacity-60">
+            <ChevronRight size={13} className="text-violet-600 animate-pulse" />
+            <ChevronRight size={13} className="text-violet-600 animate-pulse" style={{ animationDelay: '0.15s' }} />
+          </div>
+        )}
+      </div>
+
+      {/* Draggable thumb button */}
+      <div
+        className={cn(
+          "absolute top-[4px] left-[4px] w-[36px] h-[36px] rounded-full flex items-center justify-center text-white shadow-md z-10",
+          isDragging ? "transition-none scale-105" : "transition-transform duration-250 ease-out",
+          isLive
+            ? "bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-500/40"
+            : "bg-gradient-to-br from-violet-600 to-purple-500 shadow-purple-600/35"
+        )}
+        style={{
+          transform: `translateX(${dragX}px)`,
+        }}
+      >
+        <Phone
+          size={15}
+          fill="currentColor"
+          className={cn(
+            "transition-transform duration-200",
+            isLive ? "rotate-[135deg]" : ""
+          )}
+        />
+      </div>
+    </div>
+  );
+}
 
 export interface CinematicHeroProps extends React.HTMLAttributes<HTMLDivElement> {
   brandName?: string;
@@ -248,7 +277,8 @@ export function CinematicHero({
     const ctx = gsap.context(() => {
       gsap.set(".text-track", { autoAlpha: 0, y: 35, scale: 0.96 });
       gsap.set(".text-days", { autoAlpha: 0, y: 35, scale: 0.96 });
-      gsap.set(".main-card", { y: window.innerHeight + 120, autoAlpha: 1 });
+      const initialCardY = isMobile ? window.innerHeight * 0.72 : window.innerHeight + 120;
+      gsap.set(".main-card", { y: initialCardY, autoAlpha: 1 });
       gsap.set([".card-left-text", ".card-right-text", ".mockup-scroll-wrapper"], { autoAlpha: 0 });
       gsap.set(".cta-wrapper", { autoAlpha: 0, scale: 0.95, y: 15 });
 
@@ -257,8 +287,8 @@ export function CinematicHero({
         .to(".text-track", { duration: 0.8, autoAlpha: 1, y: 0, scale: 1, ease: "power2.out" })
         .to(".text-days", { duration: 0.8, autoAlpha: 1, y: 0, scale: 1, ease: "power2.out" }, "-=0.4");
 
-      // Smooth scroll distance: 1200px on desktop, 850px on mobile
-      const scrollDistance = isMobile ? "+=850" : "+=1250";
+      // Smooth scroll distance: 1250px on desktop/laptop, 520px responsive & fast on mobile
+      const scrollDistance = isMobile ? "+=520" : "+=1250";
 
       const scrollTl = gsap.timeline({
         scrollTrigger: {
@@ -266,7 +296,7 @@ export function CinematicHero({
           start: "top top",
           end: scrollDistance,
           pin: true,
-          scrub: 0.4, // Responsive & fluid
+          scrub: isMobile ? 0.6 : 0.4, // Responsive & fluid dampening
           anticipatePin: 1,
         },
       });
@@ -316,11 +346,10 @@ export function CinematicHero({
       style={{ perspective: "1200px" }}
       {...props}
     >
-      <style dangerouslySetInnerHTML={{ __html: INJECTED_STYLES }} />
       <div className="bg-grid-theme absolute inset-0 z-0 pointer-events-none opacity-60" aria-hidden="true" />
 
       {/* BACKGROUND LAYER 1: Hero Texts */}
-      <div className="hero-text-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-full max-w-5xl px-4 sm:px-6 top-[28%] sm:top-1/2 -translate-y-1/2 will-change-transform">
+      <div className="hero-text-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-full max-w-5xl px-4 sm:px-6 top-[44%] sm:top-1/2 -translate-y-1/2 will-change-transform">
         <span className="eyebrow mb-1.5 sm:mb-2 uppercase tracking-widest text-[10px] sm:text-[11px] font-bold text-[#7c3aed]">
           Enterprise Voice AI Engine
         </span>
@@ -416,6 +445,8 @@ export function CinematicHero({
                   <img
                     src="/images/virtualvox-brand.png"
                     alt="VIRTUALVOX"
+                    width={84}
+                    height={31}
                     className="inline-brand !w-[72px] sm:!w-[84px] h-auto opacity-75 ml-auto object-contain flex-shrink-0"
                   />
                 </div>
@@ -439,7 +470,7 @@ export function CinematicHero({
                   <div className="absolute top-[135px] -right-[3px] w-[3px] h-[55px] bg-purple-300 rounded-r-md z-0 scale-x-[-1]" aria-hidden="true" />
 
                   {/* Inner Screen: Light Purple & Lavender Priya Live Demo */}
-                  <div className="absolute inset-[5px] priya-phone-bg rounded-[2.2rem] overflow-hidden shadow-[inset_0_0_12px_rgba(124,58,237,0.1)] text-[#1f1a2e] z-10 flex flex-col justify-between p-4 pt-6">
+                  <div className="absolute inset-[5px] priya-phone-bg rounded-[2.2rem] overflow-hidden shadow-[inset_0_0_12px_rgba(124,58,237,0.1)] text-[#1f1a2e] z-10 flex flex-col justify-between p-4 pt-7 pb-3.5">
                     <div className="absolute inset-0 screen-glare z-40 pointer-events-none" aria-hidden="true" />
 
                     {/* Dynamic Island Notch */}
@@ -447,56 +478,85 @@ export function CinematicHero({
                       <div className="w-2 h-2 rounded-full bg-[#111]" />
                     </div>
 
-                    {/* Top Status & Priya Avatar Header */}
-                    <div className="relative w-full text-center mt-2 z-20">
-                      {/* Avatar Image */}
-                      <div className="relative w-24 h-24 sm:w-26 sm:h-26 mx-auto mb-1.5 overflow-hidden rounded-full border-3 border-white shadow-md shadow-purple-500/15">
-                        <img 
-                          src="/images/priya.webp" 
-                          alt="Priya, AI Voice Agent" 
-                          className="w-full h-full object-cover object-top"
-                        />
-                      </div>
-
-                      {/* Agent Name & VirtualVox Brand */}
-                      <h4 className="text-lg font-bold text-[#1f1a2e] tracking-tight">Priya</h4>
-                      <img 
-                        src="/images/virtualvox-brand.png" 
-                        alt="VIRTUALVOX" 
-                        className="w-20 h-auto mx-auto mt-0.5 opacity-75"
-                      />
-                    </div>
-
-                    {/* Call Status & Interactive Answer Button */}
-                    <div className="relative w-full text-center z-20 pb-1">
-                      {/* Live Call Timer & Waveform */}
-                      {call.state === 'live' && (
-                        <div className="flex items-center justify-center gap-1.5 text-violet-700 text-[11px] font-semibold mb-1.5">
+                    {/* Top Status Area */}
+                    <div className="relative w-full text-center z-20 h-5">
+                      {call.state === 'live' ? (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-700 text-[11px] font-semibold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                           <span>
                             {Math.floor(call.seconds / 60)}:{String(call.seconds % 60).padStart(2, '0')}
                           </span>
-                          <span className="flex items-center gap-1 h-2.5">
+                          <span className="flex items-center gap-0.5 h-2.5 ml-0.5">
                             {[0, 1, 2, 3, 4].map(i => (
                               <i key={i} className="priya-wave-bar" style={{ animationDelay: `${i * 0.12}s` }} />
                             ))}
                           </span>
                         </div>
+                      ) : (
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-purple-600/75">
+                          VirtualVox Voice
+                        </span>
                       )}
+                    </div>
 
-                      {/* Main Interactive Button */}
+                    {/* Centered Priya Avatar & Agent Info */}
+                    <div className="relative w-full my-auto flex flex-col items-center justify-center text-center z-20 py-1">
+                      {/* Avatar Image with subtle ring */}
+                      <div className="relative mx-auto mb-2">
+                        {playing && (
+                          <span className="absolute -inset-1 rounded-full bg-purple-400/30 animate-ping pointer-events-none" />
+                        )}
+                        <div className="relative w-24 h-24 sm:w-26 sm:h-26 overflow-hidden rounded-full border-3 border-white shadow-md shadow-purple-500/20 bg-purple-50">
+                          <img 
+                            src="/images/priya.webp" 
+                            alt="Priya, AI Voice Agent" 
+                            width={104}
+                            height={104}
+                            className="w-full h-full object-cover object-top"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Agent Name & VirtualVox Brand */}
+                      <h4 className="text-xl font-bold text-[#1f1a2e] tracking-tight">Priya</h4>
+                      <p className="text-[11px] font-semibold text-purple-700 tracking-wide mt-0.5">
+                        AI Voice Agent
+                      </p>
+                      <img 
+                        src="/images/virtualvox-brand.png" 
+                        alt="VIRTUALVOX" 
+                        width={80}
+                        height={29}
+                        className="w-20 h-auto mx-auto mt-1 opacity-80"
+                      />
+                    </div>
+
+                    {/* Bottom Call Controls & Slider */}
+                    <div className="relative w-full text-center z-20 pb-1">
+                      {/* Interactive Slider Button */}
                       {call.used && !playing ? (
                         <a 
                           href="#contact" 
-                          className="priya-answer-btn !h-[44px] !text-[12px]"
+                          className="flex items-center justify-center w-full h-[46px] rounded-full text-[12px] font-semibold text-purple-900 bg-white/90 hover:bg-white border border-[#a78aff]/70 shadow-sm transition-all"
                         >
                           <span>Contact for subscription</span>
                         </a>
                       ) : (
-                        <button
-                          type="button"
-                          className="priya-answer-btn !h-[46px] !text-[13px]"
-                          aria-pressed={playing}
-                          onClick={() => {
+                        <SlideToActionButton
+                          label={
+                            call.state === 'ending'
+                              ? 'Ending…'
+                              : playing
+                              ? 'Slide to end'
+                              : call.checking
+                              ? 'Checking…'
+                              : !call.available
+                              ? 'Slide to check again'
+                              : 'Slide to answer'
+                          }
+                          isLive={playing}
+                          disabled={call.state === 'ending' || (!playing && call.checking)}
+                          onTrigger={() => {
                             if (playing) {
                               call.stop();
                             } else if (call.available) {
@@ -505,35 +565,26 @@ export function CinematicHero({
                               void call.retryAvailability();
                             }
                           }}
-                          disabled={call.state === 'ending' || (!playing && call.checking)}
-                        >
-                          <span className="priya-phone-icon !w-[32px] !h-[32px]">
-                            <Phone size={15} fill="currentColor" />
-                          </span>
-                          <span className="pl-7">
-                            {call.state === 'ending' ? 'Ending…' 
-                              : playing ? 'End call' 
-                              : call.checking ? 'Checking…' 
-                              : !call.available ? 'Check again' 
-                              : 'Click to answer'}
-                          </span>
-                        </button>
+                        />
                       )}
 
                       {/* Call Note */}
-                      <small className="block text-[9px] text-[#766d86] mt-1.5 font-medium">
-                        {playing ? 'Up to 60 seconds · End any time' 
-                          : call.used ? 'Free demo used' 
-                          : !call.available ? 'Tap to check availability' 
+                      <small className="block text-[9.5px] text-[#766d86] mt-2 font-medium">
+                        {playing
+                          ? 'Up to 60 seconds · End any time'
+                          : call.used
+                          ? 'Free demo used'
+                          : !call.available
+                          ? 'Slide or tap to check availability'
                           : 'Live demo · Microphone required'}
                       </small>
 
                       {/* Audio Controls during live call */}
                       {call.state === 'live' && (
-                        <div className="flex items-center justify-center gap-1.5 mt-1.5">
+                        <div className="flex items-center justify-center gap-1.5 mt-2">
                           <button
                             onClick={call.toggleMute}
-                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/80 border border-purple-200 text-purple-800 shadow-sm"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-white/90 border border-purple-200 text-purple-800 shadow-sm hover:bg-white transition-colors"
                           >
                             {call.muted ? <MicOff size={11} /> : <Mic size={11} />}
                             <span>{call.muted ? 'Unmute' : 'Mute'}</span>
@@ -541,7 +592,7 @@ export function CinematicHero({
                           {call.playbackBlocked && (
                             <button
                               onClick={call.playAudio}
-                              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-violet-600 text-white shadow-sm"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-violet-600 text-white shadow-sm hover:bg-violet-700 transition-colors"
                             >
                               <Volume2 size={11} />
                               <span>Play Audio</span>
@@ -552,7 +603,7 @@ export function CinematicHero({
 
                       {/* Error Banner */}
                       {call.error && (call.available || playing) && !(call.used && !playing) && (
-                        <p className="text-[9px] text-rose-600 mt-1 font-medium bg-rose-50 rounded-lg p-1 border border-rose-200">
+                        <p className="text-[9px] text-rose-600 mt-1.5 font-medium bg-rose-50 rounded-lg p-1 border border-rose-200">
                           {call.error}
                         </p>
                       )}
@@ -607,6 +658,8 @@ export function CinematicHero({
                   <img
                     src="/images/virtualvox-brand.png"
                     alt="VIRTUALVOX"
+                    width={84}
+                    height={31}
                     className="inline-brand !w-[84px] h-auto opacity-75 ml-auto object-contain flex-shrink-0"
                   />
                 </div>

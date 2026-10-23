@@ -9,9 +9,11 @@ import { LandingAccordionItem } from '@/components/ui/interactive-image-accordio
 import { IndustryShowcase } from '@/components/ui/industry-showcase';
 import FaqSection from '@/components/ui/habit-faq-scroller';
 import DitheredFooter from '@/components/ui/dithered-footer';
-import RobotHero from '@/components/ui/robot-hero';
 import MobbinIntegrations from '@/components/ui/mobbin-integrations';
 import VapiHowItWorks from '@/components/ui/vapi-how-it-works';
+import VapiContactSection from '@/components/ui/vapi-contact-section';
+
+import RobotHero from '@/components/ui/robot-hero';
 import { Activity, AudioLines, CalendarDays, Check, ChevronDown, CircleCheck, Cpu, Headphones, HeartPulse, Landmark, Layers3, Menu, MessageCircle, Mic, Pause, Phone, PhoneCall, Play, Plus, ShieldCheck, ShoppingCart, Sparkles, Workflow, X } from 'lucide-react';
 
 const hosted = process.env.NEXT_PUBLIC_DEPLOY_TARGET === 'cloudflare';
@@ -100,13 +102,23 @@ export default function Home() {
   return <MotionConfig reducedMotion="user">
     <a className="skip-link" href="#main">Skip to content</a>
     <motion.div className="scroll-progress" style={{scaleX:progress}} />
-    <header className={`site-header ${isScrolled ? 'is-scrolled' : ''}`} id="top">
+    <header className={`site-header ${isScrolled ? 'is-scrolled' : ''}`} id="top" suppressHydrationWarning>
       <div className="nav-shell"><Logo />
         <nav className="desktop-nav" aria-label="Main navigation">
-          <div className="nav-dropdown" ref={productRef}><button className="nav-item" aria-expanded={productMenu} aria-controls="product-menu" onClick={()=>setProductMenu(!productMenu)}>Products <ChevronDown size={14} /></button>
+          <div className="nav-dropdown" ref={productRef}>
+            <button
+              className="nav-item"
+              type="button"
+              aria-expanded={productMenu}
+              aria-controls={productMenu ? "product-menu" : undefined}
+              onClick={()=>setProductMenu(!productMenu)}
+              suppressHydrationWarning
+            >
+              Products <ChevronDown size={14} />
+            </button>
             <AnimatePresence>{productMenu&&<motion.div id="product-menu" className="dropdown-panel" initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}}><a href="#platform" onClick={()=>setProductMenu(false)}><Phone size={19}/><span>Voice agents<small>A better conversation starts here</small></span></a><a href="#platform" onClick={()=>setProductMenu(false)}><MessageCircle size={19}/><span>Text agents<small>Keep every channel connected</small></span></a><a href="#integrations" onClick={()=>setProductMenu(false)}><Workflow size={19}/><span>Integrations<small>Fit into the way you work</small></span></a></motion.div>}</AnimatePresence>
           </div><a href="#industries">Industries</a><a href="#how-it-works">How it works</a><a href="#team">Meet the agents</a>
-        </nav><DemoLink /><button className="menu-toggle" ref={mobileRef} aria-label={menu?'Close navigation':'Open navigation'} aria-expanded={menu} aria-controls="mobile-nav" onClick={()=>setMenu(!menu)}>{menu?<X/>:<Menu/>}</button>
+        </nav><DemoLink /><button className="menu-toggle" ref={mobileRef} type="button" aria-label={menu?'Close navigation':'Open navigation'} aria-expanded={menu} aria-controls={menu ? "mobile-nav" : undefined} onClick={()=>setMenu(!menu)} suppressHydrationWarning>{menu?<X/>:<Menu/>}</button>
       </div>
       <AnimatePresence>{menu&&<motion.nav className="mobile-nav" id="mobile-nav" aria-label="Mobile navigation" initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} exit={{height:0,opacity:0}}>{[['Platform','#platform'],['Industries','#industries'],['How it works','#how-it-works'],['Meet the agents','#team'],['Book a demo','#contact']].map(([label,href])=><a key={href} href={href} onClick={()=>setMenu(false)}>{label}</a>)}</motion.nav>}</AnimatePresence>
     </header>
@@ -122,7 +134,9 @@ export default function Home() {
         pantallaBrillo={1.4}
         showNav={false}
       />
-      <CinematicHero />
+      <div>
+        <CinematicHero />
+      </div>
 
       <section className="section container !pt-8 sm:!pt-10 md:!pt-14 -mt-12 sm:-mt-16 md:-mt-28 relative z-30" id="platform"><Reveal className="section-heading"><span className="eyebrow">A LITTLE LESS BUSYWORK. A LOT MORE POSSIBILITY.</span><h2>A human touch.<br/><span>At a whole new scale.</span></h2><p>Your best customer experience shouldn’t depend on<br className="desktop-break"/> whether someone is free to pick up the phone.</p></Reveal>
         <div className="feature-grid"><Reveal className="feature-card feature-large"><div className="card-label"><Headphones size={20}/> Voice agents</div><h3>Every call deserves<br/>a great conversation.</h3><p>Natural conversations that listen, understand, and guide your customers to the next step.</p><div className="conversation-visual"><span className="conversation-status"><span/> A sample conversation</span><div className="chat-bubble customer">Hi, can I book an appointment?</div><div className="chat-bubble agent">Absolutely. Let’s find a time that works for you.<span className="typing"><i/><i/><i/></span></div><div className="conversation-wave"><Mic size={18}/><Wave active/><img className="inline-brand" src="/images/virtualvox-brand.png" alt="VIRTUALVOX" width="2080" height="756"/></div></div></Reveal>
@@ -132,8 +146,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="demo-section" id="demo"><div className="container demo-layout"><Reveal className="demo-copy"><span className="eyebrow">DON’T JUST TAKE OUR WORD FOR IT</span><h2>It starts with<br/>a simple <em>hello.</em></h2><p>A little warmth. A natural rhythm. A conversation that feels effortless. Explore a sample of the experience.</p><div className="sample-selector" aria-label="Choose a sample">{industries.map((item,index)=><button key={item.name} className={sample===index?'selected':''} onClick={()=>{stopSample();setSample(index);}}>{item.name}</button>)}</div><span className="sample-disclaimer">Scripted audio preview · No microphone required</span></Reveal>
-        <Reveal className="audio-card"><div className="audio-card-top"><BrandIcon /><div><strong>{agents[activeAgent].name} from VIRTUALVOX</strong><small>Interactive voice preview</small></div><AudioLines size={23}/></div><div className="audio-orb"><div/><div/><Mic size={38}/></div><Wave active={speaking}/><button className="button button-dark play-button" onClick={()=>playSample()} aria-label={speaking?'Stop sample':'Play sample'}>{speaking?<Pause size={17}/>:<Play size={17} fill="currentColor"/>}{speaking?'Stop sample':'Play sample'}</button><div className="sample-transcript" aria-live="polite"><p><span>Customer</span>{industries[sample].question}</p><p><span>{agents[activeAgent].name}</span>{industries[sample].answer}</p></div>{audioMessage&&<p className="audio-error" role="status">{audioMessage}</p>}</Reveal></div></section>
+      <section className="demo-section" id="demo"><div className="container demo-layout"><Reveal className="demo-copy"><span className="eyebrow">DON’T JUST TAKE OUR WORD FOR IT</span><h2>It starts with<br/>a simple <em>hello.</em></h2><p>A little warmth. A natural rhythm. A conversation that feels effortless. Explore a sample of the experience.</p><div className="sample-selector" aria-label="Choose a sample">{industries.map((item,index)=><button key={item.name} type="button" suppressHydrationWarning className={sample===index?'selected':''} onClick={()=>{stopSample();setSample(index);}}>{item.name}</button>)}</div><span className="sample-disclaimer">Scripted audio preview · No microphone required</span></Reveal>
+        <Reveal className="audio-card"><div className="audio-card-top"><BrandIcon /><div><strong>{agents[activeAgent].name} from VIRTUALVOX</strong><small>Interactive voice preview</small></div><AudioLines size={23}/></div><div className="audio-orb"><div/><div/><Mic size={38}/></div><Wave active={speaking}/><button className="button button-dark play-button" type="button" suppressHydrationWarning onClick={()=>playSample()} aria-label={speaking?'Stop sample':'Play sample'}>{speaking?<Pause size={17}/>:<Play size={17} fill="currentColor"/>}{speaking?'Stop sample':'Play sample'}</button><div className="sample-transcript" aria-live="polite"><p><span>Customer</span>{industries[sample].question}</p><p><span>{agents[activeAgent].name}</span>{industries[sample].answer}</p></div>{audioMessage&&<p className="audio-error" role="status">{audioMessage}</p>}</Reveal></div></section>
 
       <Reveal delay={0.08}>
         <MobbinIntegrations
@@ -168,9 +182,11 @@ export default function Home() {
 
       <section className="team-section" id="team"><div className="container"><Reveal delay={0.1}><LandingAccordionItem defaultActiveIndex={activeAgent} onSelectAgent={(index)=>{stopSample();setActiveAgent(index);}} /></Reveal></div></section>
 
-      <section className="contact-section" id="contact"><div className="container contact-layout"><Reveal><span className="eyebrow">LET’S MAKE ROOM FOR WHAT’S NEXT</span><h2>Your next great<br/>conversation<br/><span>starts here.</span></h2><p>Tell us a little about your business.<br/>Let’s explore what VIRTUALVOX could do for you.</p><div className="contact-benefits"><span><Check/> A conversation about your goals</span><span><Check/> A look at your customer journeys</span><span><Check/> A clear plan for your first agent</span></div><div className="contact-mark"><BrandIcon /><span>More connection.<br/>Less missed opportunity.</span></div></Reveal><Reveal className="contact-card"><h3>Let’s talk.</h3><p>Make your first connection with VIRTUALVOX.</p>{formState==='success'?<div className="form-success" role="status"><CircleCheck size={40}/><h4>Your request is recorded.</h4><p>{hosted ? 'Thank you for sharing your goals. Your demo request has been securely recorded.' : 'Thank you for sharing your goals. This local preview saves your request on this computer; it does not send email.'}</p><button className="button button-light" onClick={()=>setFormState('idle')}>Send another request</button></div>:<form onSubmit={submit}><label>Your name<input name="name" autoComplete="name" placeholder="Alex Morgan" required maxLength={120}/></label><label>Work email<input type="email" name="email" autoComplete="email" placeholder="alex@company.com" required maxLength={254}/></label><label>Company<input name="company" autoComplete="organization" placeholder="Your company" required maxLength={180}/></label><label>What would you like your agent to help with?<textarea name="message" rows={3} placeholder="Tell us a little about your goals…" maxLength={3000}/></label><label className="honeypot" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off"/></label><label className="consent"><input type="checkbox" name="consent" required/><span>I agree to share these details for this demo request.</span></label>{formState==='error'&&<p role="alert" className="form-error">{formError}</p>}<button className="button button-dark" disabled={formState==='sending'} type="submit">{formState==='sending'?'Saving your request…':'Request a demo'}</button><small className="form-caption">Your details are used for this request only.</small></form>}</Reveal></div></section>
+      <Reveal delay={0.08}>
+        <VapiContactSection />
+      </Reveal>
 
-      <section className="faq-scroller-section overflow-hidden py-16 md:py-24" id="faq"><Reveal delay={0.1}><FaqSection /></Reveal></section>
+      <section className="faq-scroller-section overflow-hidden" id="faq"><Reveal delay={0.1}><FaqSection /></Reveal></section>
     </main>
     <DitheredFooter
       brand="VIRTUALVOX"

@@ -24,33 +24,33 @@ export interface FaqData {
 
 /**
  * FaqCard
- * Reusable card for a single FAQ item with crisp glassmorphism and sky blue accents.
+ * Reusable card for a single FAQ item with crisp glassmorphism and light purple accents matching footer.
  */
 export const FaqCard: React.FC<{ question: string; answer: string }> = ({
   question,
   answer,
 }) => {
   return (
-    <div className="flex flex-col items-start justify-between gap-3 p-5 sm:p-7 bg-white/95 backdrop-blur-md rounded-2xl border border-[#c9d9fd] shadow-[0_4px_25px_rgba(50,80,180,0.07)] hover:shadow-[0_14px_35px_rgba(50,80,180,0.14)] hover:border-[#a8c2fc] w-[285px] sm:w-[360px] md:w-[410px] flex-shrink-0 faq-card transition-all duration-300">
+    <div className="flex flex-col items-start justify-between gap-3 p-5 sm:p-7 bg-white/95 backdrop-blur-md rounded-2xl border border-purple-200/80 shadow-[0_4px_25px_rgba(139,92,246,0.07)] hover:shadow-[0_14px_35px_rgba(139,92,246,0.15)] hover:border-purple-300 w-[285px] sm:w-[360px] md:w-[410px] flex-shrink-0 faq-card transition-all duration-300">
       <div className="space-y-2.5">
         <div className="flex items-center gap-2">
-          <span className="w-6 h-6 rounded-lg bg-[#ebf1ff] text-[#2f54d4] flex items-center justify-center flex-shrink-0">
+          <span className="w-6 h-6 rounded-lg bg-purple-100/90 text-[#7c3aed] flex items-center justify-center flex-shrink-0">
             <HelpCircle size={14} />
           </span>
-          <h3 className="text-base sm:text-lg font-bold text-[#1a2542] tracking-tight leading-snug faq-title">
+          <h3 className="text-base sm:text-lg font-bold text-[#1f1731] tracking-tight leading-snug faq-title">
             {question}
           </h3>
         </div>
-        <p className="text-xs sm:text-sm text-[#4d5975] leading-relaxed faq-answer">
+        <p className="text-xs sm:text-sm text-[#564a70] leading-relaxed faq-answer">
           {answer}
         </p>
       </div>
 
-      <div className="pt-2.5 border-t border-[#edf2fd] w-full flex items-center justify-between text-[11px] font-medium text-[#7a88a5]">
+      <div className="pt-2.5 border-t border-purple-100/80 w-full flex items-center justify-between text-[11px] font-medium text-[#7a6f91]">
         <span className="flex items-center gap-1">
-          <Sparkles size={11} className="text-[#3b62ec]" /> VIRTUALVOX Intelligence
+          <Sparkles size={11} className="text-[#7c3aed]" /> VIRTUALVOX Intelligence
         </span>
-        <span className="text-[#2b4ec9] font-semibold">Verified FAQ</span>
+        <span className="text-[#7c3aed] font-semibold">Verified FAQ</span>
       </div>
     </div>
   );
@@ -98,7 +98,7 @@ export const defaultFaqData: FaqData = {
   rows: [
     {
       id: 'row1',
-      speed: '55s',
+      speed: '50s',
       direction: 'left',
       faqItems: [
         {
@@ -125,11 +125,23 @@ export const defaultFaqData: FaqData = {
           answer:
             'Our neural speech synthesis achieves sub-second latency (under 400ms), delivering natural conversational rhythm without awkward pauses.',
         },
+        {
+          id: 'q9',
+          question: 'Can agents handle diverse global accents?',
+          answer:
+            'Yes. Our acoustic speech recognition models are trained on diverse global accents and support over 30 languages with high comprehension.',
+        },
+        {
+          id: 'q11',
+          question: "Can we customize the agent's tone and brand voice?",
+          answer:
+            'Every agent persona, vocabulary, boundaries, and tone are tailored to sound like a natural, thoughtful extension of your brand.',
+        },
       ],
     },
     {
       id: 'row2',
-      speed: '45s',
+      speed: '48s',
       direction: 'right',
       faqItems: [
         {
@@ -156,30 +168,11 @@ export const defaultFaqData: FaqData = {
           answer:
             'Tell us about your call volume, current stack, and workflow goals using the request form below. We will prepare a personalized live demo.',
         },
-      ],
-    },
-    {
-      id: 'row3',
-      speed: '65s',
-      direction: 'left',
-      faqItems: [
-        {
-          id: 'q9',
-          question: 'Can agents handle diverse global accents?',
-          answer:
-            'Yes. Our acoustic speech recognition models are trained on diverse global accents and support over 30 languages with high comprehension.',
-        },
         {
           id: 'q10',
           question: 'What happens during after-hours emergency calls?',
           answer:
             'Agents answer 24/7, triage emergency requests, log tickets, and instantly notify on-call technicians according to your escalation rules.',
-        },
-        {
-          id: 'q11',
-          question: "Can we customize the agent's tone and brand voice?",
-          answer:
-            'Every agent persona, vocabulary, boundaries, and tone are tailored to sound like a natural, thoughtful extension of your brand.',
         },
         {
           id: 'q12',
@@ -194,7 +187,7 @@ export const defaultFaqData: FaqData = {
 
 /**
  * FaqSection
- * Assembles title, subtitle, and multiple horizontal scrolling rows with light sky blue gradient backdrop.
+ * Assembles title, subtitle, and 2 horizontal scrolling rows with light purple gradient backdrop.
  */
 export const FaqSection: React.FC<{ data?: FaqData; className?: string }> = ({
   data = defaultFaqData,
@@ -202,17 +195,17 @@ export const FaqSection: React.FC<{ data?: FaqData; className?: string }> = ({
 }) => {
   return (
     <div
-      className={`relative flex flex-col items-center gap-10 md:gap-14 py-8 md:py-12 w-full ${className}`}
+      className={`relative flex flex-col items-center gap-6 md:gap-7 pt-0 pb-1 sm:pb-2 w-full ${className}`}
     >
       {/* Heading Block */}
       <div className="flex flex-col items-center gap-3.5 text-center z-10 max-w-2xl px-4">
-        <span className="eyebrow inline-flex items-center gap-2 text-xs font-bold tracking-widest text-[#2446be] bg-white/75 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/80 shadow-sm">
+        <span className="eyebrow inline-flex items-center gap-2 text-xs font-bold tracking-widest text-[#7c3aed] bg-white/85 backdrop-blur-md px-3.5 py-1 rounded-full border border-purple-200/70 shadow-sm">
           <MessageCircle size={14} /> A FEW GOOD QUESTIONS
         </span>
-        <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-[#141e34] tracking-tight leading-tight">
-          Glad you <span className="text-[#6479a6]">asked.</span>
+        <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-[#1f1731] tracking-tight leading-tight">
+          Glad you <span className="text-[#7c3aed]">asked.</span>
         </h2>
-        <p className="text-base sm:text-lg text-[#3e4b67] max-w-xl leading-relaxed">
+        <p className="text-base sm:text-lg text-[#564a70] max-w-xl leading-relaxed">
           {data.mainSubtitle}
         </p>
       </div>

@@ -139,7 +139,6 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
     <div
       role="button"
       tabIndex={0}
-      aria-pressed={isActive}
       aria-expanded={isActive}
       aria-label={`${item.name} - ${item.tag}: ${item.role}`}
       onClick={onActivate}
@@ -202,6 +201,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
             muted
             playsInline
             preload="metadata"
+            aria-hidden="true"
             className="w-full h-full object-cover object-center transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
             style={{
               transform: isActive ? "scale(1.04)" : "scale(1.0)",

@@ -178,7 +178,7 @@ export function IndustryShowcase({
     <div className="w-full">
       {/* 21st.dev Style Sliding Tab Bar */}
       <div className="relative flex items-center justify-start sm:justify-center p-1.5 bg-[#f5f1fa] border border-[#ebe4f4] rounded-2xl max-w-4xl mx-auto overflow-x-auto scrollbar-none shadow-sm">
-        <div className="flex items-center gap-1 min-w-max p-0.5">
+        <div role="tablist" aria-label="Industry solutions" className="flex items-center gap-1 min-w-max p-0.5">
           {industriesData.map((item, idx) => {
             const Icon = item.icon;
             const isCurrent = idx === activeTab;
@@ -222,6 +222,9 @@ export function IndustryShowcase({
         <AnimatePresence mode="wait">
           <motion.div
             key={selected.id}
+            role="tabpanel"
+            id={`panel-${selected.id}`}
+            aria-labelledby={`tab-${selected.id}`}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}

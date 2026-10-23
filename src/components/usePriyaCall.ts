@@ -16,12 +16,17 @@ function demoURL(path: string) {
   return new URL(`/api/demo/${path}`, base);
 }
 
-async function demoRequest(path: string, init: RequestInit = {}, milliseconds = 12000) {
+async function demoRequest(path: string, init: RequestInit = {}, milliseconds = 2000) {
   // AbortSignal.timeout is missing in some otherwise WebRTC-capable mobile browsers.
   const controller = new AbortController(), timer = setTimeout(() => controller.abort(), milliseconds);
   try {
     const response = await fetch(demoURL(path), { ...init, signal: controller.signal });
     return { response, body: await response.json() };
+  } catch {
+    return {
+      response: { ok: false, status: 503 } as Response,
+      body: { used: false, available: false, message: 'Voice server offline. Check again shortly.' }
+    };
   } finally { clearTimeout(timer); }
 }
 function requestId() {
@@ -45,13 +50,24 @@ export function usePriyaCall() {
     eligibilityRead.current = (async () => {
       try {
         const { response, body: status } = await demoRequest('status', { cache: 'no-store' });
-        if (!response.ok || typeof status.used !== 'boolean' || typeof status.available !== 'boolean')
-          throw new Error('Availability could not be checked.');
+        if (!response.ok || typeof status.used !== 'boolean' || typeof status.available !== 'boolean') {
+          if (mounted.current) {
+            setAvailable(false);
+            setAvailabilityMessage(status.message || 'Priya voice demo is currently offline.');
+          }
+          return { used: false, available: false } as Eligibility;
+        }
         if (mounted.current) {
           setUsed(status.used); setAvailable(status.available);
           setAvailabilityMessage(status.available ? '' : status.message || 'Priya is on another call or temporarily unavailable. Check again shortly.');
         }
         return status as Eligibility;
+      } catch {
+        if (mounted.current) {
+          setAvailable(false);
+          setAvailabilityMessage("Voice connection offline.");
+        }
+        return { used: false, available: false } as Eligibility;
       } finally { eligibilityRead.current = null; }
     })();
     return eligibilityRead.current;
@@ -104,12 +120,14 @@ export function usePriyaCall() {
   useEffect(() => {
     mounted.current = true;
     const check = () => { if (!document.hidden) void retryAvailability(); };
-    check(); const interval = setInterval(check, 30000);
+    // Defer initial check so it never competes with initial paint / LCP
+    const initialTimer = setTimeout(check, 1200);
+    const interval = setInterval(check, 45000);
     const onVisibility = () => { if (document.hidden) stop(); else check(); };
     document.addEventListener('visibilitychange', onVisibility); window.addEventListener('pagehide', stop);
     window.addEventListener('online', check); window.addEventListener('focus', check);
     return () => {
-      mounted.current = false; clearInterval(interval);
+      mounted.current = false; clearTimeout(initialTimer); clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibility); window.removeEventListener('pagehide', stop);
       window.removeEventListener('online', check); window.removeEventListener('focus', check); stop();
     };

@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, ContactShadows } from "@react-three/drei";
+import { ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Sparkles, Play, AudioLines } from "lucide-react";
@@ -36,7 +36,7 @@ function ResponsiveGroup({
   const { viewport } = useThree();
   const isMobile = viewport.width < 2.8;
   const s = Math.min(1.15, viewport.width / (isMobile ? 2.85 : 3.4)) * scale;
-  const posY = isMobile ? -0.32 : 0;
+  const posY = isMobile ? 0.08 : 0;
   return <group position={[0, posY, 0]} scale={s}>{children}</group>;
 }
 
@@ -881,7 +881,7 @@ export function RobotHero({
   return (
     <section
       ref={containerRef}
-      className={`relative w-full h-[calc(100svh-var(--header,64px))] min-h-[500px] sm:min-h-[640px] max-h-[600px] sm:max-h-[860px] overflow-hidden flex flex-col justify-between ${className}`}
+      className={`relative w-full h-[calc(100svh-var(--header,64px))] min-h-[460px] sm:min-h-[640px] max-h-[560px] sm:max-h-[860px] overflow-hidden flex flex-col justify-between ${className}`}
       style={{
         background: `linear-gradient(180deg, ${entorno.fondoArriba} 0%, #fefdff 35%, ${entorno.fondoMedio} 75%, ${entorno.fondoAbajo} 100%)`,
       }}
@@ -892,13 +892,12 @@ export function RobotHero({
         style={{ zIndex: 0 }}
       >
         <span
-          className="font-black whitespace-nowrap tracking-tight select-none"
+          className="font-black whitespace-nowrap tracking-tight select-none transform translate-y-4 sm:translate-y-14"
           style={{
             color: "#7c3aed",
             opacity: 0.08,
             fontSize: "clamp(3.5rem, 16vw, 15rem)",
             lineHeight: 1,
-            transform: "translateY(55px)",
             fontFamily: "'Manrope', Arial, sans-serif",
           }}
         >
@@ -937,7 +936,12 @@ export function RobotHero({
               color={entorno.luzRellenoColor}
             />
 
-            <Environment preset="studio" blur={0.5} />
+            {/* Self-contained ambient & hemisphere studio lighting - eliminates 7.6s raw.githack.com download */}
+            <hemisphereLight
+              args={["#ffffff", "#c4b5fd", 0.9]}
+            />
+            <pointLight position={[0, 4, 3]} intensity={0.9} color="#f5f3ff" />
+            <pointLight position={[-4, 1, -2]} intensity={0.6} color="#e9d5ff" />
 
             <ResponsiveGroup scale={scale}>
               <ContactShadows
@@ -993,7 +997,7 @@ export function RobotHero({
       )}
 
       {/* Top Hero Copy & CTA Overlay: Perfectly Aligned with Navbar */}
-      <div className="relative z-20 w-full max-w-[1160px] mx-auto px-4 sm:px-8 pt-4 sm:pt-8 md:pt-12 text-center pointer-events-none">
+      <div className="relative z-20 w-full max-w-[1160px] mx-auto px-4 sm:px-8 pt-5 sm:pt-8 md:pt-12 text-center pointer-events-none">
         {eyebrow && (
           <div className="eyebrow pointer-events-auto mb-2 sm:mb-4 text-[10px] sm:text-xs">
             <AudioLines size={14} className="sm:w-[15px] sm:h-[15px]" />
