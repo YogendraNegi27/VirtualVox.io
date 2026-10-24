@@ -4,9 +4,22 @@ const config = {
   compress: true,
   images: {
     formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.21st.dev',
+      },
+      {
+        protocol: 'https',
+        hostname: 'me7aitdbxq.ufs.sh',
+      },
+    ],
   },
   experimental: {
-    cpus: 1,
     agentUpgrade: "security",
   },
   outputFileTracingRoot: process.cwd(),

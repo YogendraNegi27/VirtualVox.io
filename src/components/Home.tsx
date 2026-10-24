@@ -1,17 +1,19 @@
 'use client';
 
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
-import { AnimatePresence, motion, MotionConfig, useScroll, useSpring } from 'motion/react';
+import { AnimatePresence, motion, MotionConfig, useMotionValueEvent, useScroll, useSpring } from 'motion/react';
 import AnimatedVideo from './AnimatedVideo';
 import { usePageMotion } from './usePageMotion';
-import { CinematicHero } from '@/components/ui/cinematic-landing-hero';
+import { VirtualVoxHeroExpansion } from '@/components/ui/scroll-expansion-hero';
 import { LandingAccordionItem } from '@/components/ui/interactive-image-accordion';
-import { IndustryShowcase } from '@/components/ui/industry-showcase';
+import { IndustryStoryScroll } from '@/components/ui/industry-story-scroll';
 import FaqSection from '@/components/ui/habit-faq-scroller';
 import DitheredFooter from '@/components/ui/dithered-footer';
 import MobbinIntegrations from '@/components/ui/mobbin-integrations';
 import VapiHowItWorks from '@/components/ui/vapi-how-it-works';
 import VapiContactSection from '@/components/ui/vapi-contact-section';
+import { AnimatedVoiceGlobe } from '@/components/ui/animated-voice-globe';
+import { CardHandGallery, type FanCardItem } from '@/components/ui/card-hand-gallery';
 
 import RobotHero from '@/components/ui/robot-hero';
 import { Activity, AudioLines, CalendarDays, Check, ChevronDown, CircleCheck, Cpu, Headphones, HeartPulse, Landmark, Layers3, Menu, MessageCircle, Mic, Pause, Phone, PhoneCall, Play, Plus, ShieldCheck, ShoppingCart, Sparkles, Workflow, X } from 'lucide-react';
@@ -32,6 +34,84 @@ const industries = [
   {name:'Financial Services', icon:Landmark, title:'Secure, compliant assistance for modern banking.', text:'Guide customers through loan applications, balance checks, fraud alerts, and branch consultations with multi-factor verification.', question:'I noticed an unrecognized charge on my card and want to report it.', answer:'I understand that is urgent. Let me verify your card ending in 4082 and flag that transaction for security review immediately.', buttonText:'Explore Financial solutions'},
   {name:'Retail', icon:ShoppingCart, title:'Drive sales and keep shoppers informed 24/7.', text:'Answer product enquiries, check real-time inventory, handle returns and exchanges, and track shipment status seamlessly.', question:'Can I check the delivery status of order #VX-9421?', answer:'Your package is out for delivery today and estimated to arrive by 4:00 PM. Would you like a tracking link sent to your phone?', buttonText:'Explore Retail solutions'},
 ];
+const platformCards: FanCardItem[] = [
+  {
+    id: 'voice-agents',
+    title: 'Voice Agents',
+    description: 'Natural, low-latency conversations that listen, understand, and guide your callers with human emotional intelligence and zero awkward delays.',
+    tag: 'REAL-TIME SPEECH',
+    badge: 'Sub-Second AI',
+    stat: '99.4%',
+    statLabel: 'Intent Resolution Rate',
+    icon: Headphones,
+    features: [
+      'Ultra-low latency conversational speech',
+      'Natural interruption & barge-in handling',
+      'Human emotional tone matching',
+    ],
+  },
+  {
+    id: 'text-agents',
+    title: 'Text Agents',
+    description: 'Always-on customer messaging across SMS, WhatsApp, and Web Chat with persistent context, instant memory, and automated next steps.',
+    tag: 'OMNICHANNEL CHAT',
+    badge: 'Instant Context',
+    stat: '< 2s',
+    statLabel: 'Average First Response',
+    icon: MessageCircle,
+    features: [
+      'SMS, WhatsApp & Web Chat in sync',
+      'Persistent customer journey memory',
+      'Automated booking & follow-ups',
+    ],
+  },
+  {
+    id: 'connected-workflows',
+    title: 'Connected Workflows',
+    description: 'Move seamlessly from conversation to execution. Your agents read and write live data directly to your CRM, calendars, and enterprise backends.',
+    tag: 'TOOL INTEGRATIONS',
+    badge: 'Full Automation',
+    stat: '100+',
+    statLabel: 'Native Connectors & APIs',
+    icon: Workflow,
+    features: [
+      'Live two-way CRM record syncing',
+      'Instant calendar booking & dispatch',
+      'Custom webhook triggers & logic',
+    ],
+  },
+  {
+    id: 'enterprise-control',
+    title: 'Enterprise Control',
+    description: 'Define precise business boundaries, security compliance, and knowledge guardrails with effortless warm transfers to your human team.',
+    tag: 'GUARDRAILS & COMPLIANCE',
+    badge: 'Zero Hallucinations',
+    stat: '100%',
+    statLabel: 'Knowledge Enforcement',
+    icon: ShieldCheck,
+    features: [
+      'Custom knowledge base guardrails',
+      'Frictionless human agent warm transfer',
+      'Full call audio & text audit logs',
+    ],
+  },
+  {
+    id: 'instant-intelligence',
+    title: 'Instant Intelligence',
+    description: 'Transform every call and message into structured intelligence with real-time sentiment tracking, automated summaries, and conversion alerts.',
+    tag: 'CONVERSATION DATA',
+    badge: 'Deep Analytics',
+    stat: '24/7',
+    statLabel: 'Live Telemetry & Tracking',
+    icon: Sparkles,
+    features: [
+      'Real-time customer sentiment scoring',
+      'Automated call summaries & tagging',
+      'Drop-off & objection bottleneck alerts',
+    ],
+  },
+];
+
 const faqs = [
   ['What can a VIRTUALVOX agent help with?','Voice and text agents can support common enquiries, appointment requests, lead qualification, and handoffs. Each agent should be configured around your business information and approved workflows.'],
   ['Can I keep my existing tools?','The site includes an integration overview. Connecting your actual CRM, calendar, or telephony system requires API credentials and a configured backend integration. We can plan the right connections for your workflow.'],
@@ -44,7 +124,18 @@ function Reveal({children,className='',delay=0}:{children:ReactNode;className?:s
   return <div className={`reveal ${className}`} data-reveal="" style={{'--reveal-delay':`${delay}s`} as CSSProperties}>{children}</div>;
 }
 function Wave({active=false}:{active?:boolean}) { return <div className={`wave ${active?'active':''}`} aria-hidden="true">{Array.from({length:25},(_,i)=><i key={i} style={{height:`${(10+Math.sin(i*1.7)**2*30).toFixed(2)}px`,animationDelay:`${(i*0.065).toFixed(3)}s`}} />)}</div>; }
-function Logo({footer=false}:{footer?:boolean}) { return <a className={`brand ${footer?'brand-footer':''}`} href="#top" aria-label="VIRTUALVOX home"><img src="/images/virtualvox-brand.png" alt="VIRTUALVOX — AI Voice Agent" width="2080" height="756" /></a>; }
+function Logo({footer=false, onTopClick}:{footer?:boolean; onTopClick?: (e: React.MouseEvent) => void}) {
+  return (
+    <a
+      className={`brand ${footer?'brand-footer':''}`}
+      href="#top"
+      onClick={onTopClick}
+      aria-label="VIRTUALVOX home"
+    >
+      <img src="/images/virtualvox-brand.png" alt="VIRTUALVOX — AI Voice Agent" width="2080" height="756" />
+    </a>
+  );
+}
 function BrandIcon() { return <span className="brand-icon" aria-hidden="true"><img src="/images/virtualvox-brand.png" alt="" width="2080" height="756"/></span>; }
 function DemoLink({children='Book a demo',className='button button-dark'}:{children?:ReactNode;className?:string}) { return <a className={className} href={process.env.NEXT_PUBLIC_BOOKING_URL || '#contact'}>{children}</a>; }
 
@@ -67,16 +158,49 @@ export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const productRef=useRef<HTMLDivElement>(null);
   const mobileRef=useRef<HTMLButtonElement>(null);
-  const {scrollYProgress}=useScroll();
-  const progress=useSpring(scrollYProgress,{stiffness:100,damping:30});
-  const selected=industries[industry];
+  const heroRef=useRef<HTMLDivElement>(null);
+  const { scrollYProgress, scrollY } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
+  const selected = industries[industry];
 
   useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    const handleScroll = () => {
+      const y = window.scrollY || document.documentElement.scrollTop || 0;
+      const heroEl = heroRef.current || document.getElementById('hero-section');
+      const heroHeight = heroEl ? heroEl.offsetHeight : (window.innerHeight * 0.85);
+      // Switch to compact dock only when first section has finished scrolling down
+      const switchDownThreshold = Math.max(heroHeight - 110, 420);
+      // Switch back to large capsule when scrolling back up into the first section
+      const switchUpThreshold = Math.max(switchDownThreshold - 120, 300);
+
+      if (y >= switchDownThreshold) {
+        setIsScrolled(true);
+      } else if (y < switchUpThreshold) {
+        setIsScrolled(false);
+      }
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    document.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll, { capture: true } as EventListenerOptions);
+      document.removeEventListener('scroll', handleScroll, { capture: true } as EventListenerOptions);
+    };
   }, []);
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const heroEl = heroRef.current || document.getElementById('hero-section');
+    const heroHeight = heroEl ? heroEl.offsetHeight : (window.innerHeight * 0.85);
+    const switchDownThreshold = Math.max(heroHeight - 110, 420);
+    const switchUpThreshold = Math.max(switchDownThreshold - 120, 300);
+
+    if (latest >= switchDownThreshold) {
+      setIsScrolled(true);
+    } else if (latest < switchUpThreshold) {
+      setIsScrolled(false);
+    }
+  });
 
   useEffect(()=>{
     function close(event:KeyboardEvent){if(event.key==='Escape'){setMenu(false);setProductMenu(false);mobileRef.current?.focus();}}
@@ -94,60 +218,238 @@ export default function Home() {
     line.rate=0.94;line.pitch=1;line.onend=()=>setSpeaking(false);line.onerror=()=>{setSpeaking(false);setAudioMessage('Audio could not play. The sample transcript is available below.');};
     window.speechSynthesis.cancel();window.speechSynthesis.speak(line);setSpeaking(true);
   }
+  const scrollToTop = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+    });
+  };
+
   async function submit(event:FormEvent<HTMLFormElement>){
     event.preventDefault();const form=event.currentTarget;const values=new FormData(form);setFormState('sending');
     try{const res=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...Object.fromEntries(values),consent:values.get('consent')==='on'})});const body=await res.json();if(!res.ok)throw new Error(body.error);setFormState('success');form.reset();}
     catch(error){setFormError(error instanceof Error?error.message:'Something went wrong. Please try again.');setFormState('error');}
   }
   return <MotionConfig reducedMotion="user">
+    <div id="top" className="absolute top-0 left-0 w-px h-px pointer-events-none -z-50" aria-hidden="true" />
     <a className="skip-link" href="#main">Skip to content</a>
     <motion.div className="scroll-progress" style={{scaleX:progress}} />
-    <header className={`site-header ${isScrolled ? 'is-scrolled' : ''}`} id="top" suppressHydrationWarning>
-      <div className="nav-shell"><Logo />
+    <header className="site-header" suppressHydrationWarning>
+      <div className={`nav-pill ${isScrolled ? 'is-scrolled' : 'is-initial'}`}>
+        {/* Brand / Logo (Left in Initial State, Img 1 style) */}
+        <AnimatePresence initial={false}>
+          {!isScrolled && (
+            <motion.div
+              key="nav-logo"
+              className="nav-brand-container"
+              initial={{ opacity: 0, width: 0, scale: 0.95 }}
+              animate={{ opacity: 1, width: 'auto', scale: 1 }}
+              exit={{ opacity: 0, width: 0, scale: 0.95 }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <Logo onTopClick={scrollToTop} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Desktop Navigation Links */}
         <nav className="desktop-nav" aria-label="Main navigation">
+          {/* Home link appears only when scrolled (Img 2 style) */}
+          <AnimatePresence initial={false}>
+            {isScrolled && (
+              <motion.a
+                key="home-link"
+                href="#top"
+                onClick={scrollToTop}
+                className="nav-item cursor-pointer"
+                initial={{ opacity: 0, width: 0, scale: 0.88 }}
+                animate={{ opacity: 1, width: 'auto', scale: 1 }}
+                exit={{ opacity: 0, width: 0, scale: 0.88 }}
+                transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+              >
+                Home
+              </motion.a>
+            )}
+          </AnimatePresence>
+
+          {/* Products dropdown */}
           <div className="nav-dropdown" ref={productRef}>
             <button
               className="nav-item"
               type="button"
               aria-expanded={productMenu}
               aria-controls={productMenu ? "product-menu" : undefined}
-              onClick={()=>setProductMenu(!productMenu)}
+              onClick={() => setProductMenu(!productMenu)}
               suppressHydrationWarning
             >
-              Products <ChevronDown size={14} />
+              Products <ChevronDown size={14} className={productMenu ? "nav-chevron is-open" : "nav-chevron"} />
             </button>
-            <AnimatePresence>{productMenu&&<motion.div id="product-menu" className="dropdown-panel" initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}}><a href="#platform" onClick={()=>setProductMenu(false)}><Phone size={19}/><span>Voice agents<small>A better conversation starts here</small></span></a><a href="#platform" onClick={()=>setProductMenu(false)}><MessageCircle size={19}/><span>Text agents<small>Keep every channel connected</small></span></a><a href="#integrations" onClick={()=>setProductMenu(false)}><Workflow size={19}/><span>Integrations<small>Fit into the way you work</small></span></a></motion.div>}</AnimatePresence>
-          </div><a href="#industries">Industries</a><a href="#how-it-works">How it works</a><a href="#team">Meet the agents</a>
-        </nav><DemoLink /><button className="menu-toggle" ref={mobileRef} type="button" aria-label={menu?'Close navigation':'Open navigation'} aria-expanded={menu} aria-controls={menu ? "mobile-nav" : undefined} onClick={()=>setMenu(!menu)} suppressHydrationWarning>{menu?<X/>:<Menu/>}</button>
-      </div>
-      <AnimatePresence>{menu&&<motion.nav className="mobile-nav" id="mobile-nav" aria-label="Mobile navigation" initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} exit={{height:0,opacity:0}}>{[['Platform','#platform'],['Industries','#industries'],['How it works','#how-it-works'],['Meet the agents','#team'],['Book a demo','#contact']].map(([label,href])=><a key={href} href={href} onClick={()=>setMenu(false)}>{label}</a>)}</motion.nav>}</AnimatePresence>
-    </header>
-    <main id="main">
-      <RobotHero
-        backgroundText="VIRTUALVOX"
-        eyebrow="HUMAN CONNECTION. REIMAGINED."
-        title="AI voice and text agents."
-        subtitle="Never miss another opportunity. Answer every call, respond in seconds, and make every conversation count."
-        badges={["Always ready", "Made for your business", "Built around people"]}
-        color="#ede8f7"
-        pantallaColor="#7c3aed"
-        pantallaBrillo={1.4}
-        showNav={false}
-      />
-      <div>
-        <CinematicHero />
+            <AnimatePresence>
+              {productMenu && (
+                <motion.div
+                  id="product-menu"
+                  className="dropdown-panel"
+                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                  transition={{ duration: 0.18 }}
+                >
+                  <a href="#platform" onClick={() => setProductMenu(false)}>
+                    <Phone size={19} />
+                    <span>Voice agents<small>A better conversation starts here</small></span>
+                  </a>
+                  <a href="#platform" onClick={() => setProductMenu(false)}>
+                    <MessageCircle size={19} />
+                    <span>Text agents<small>Keep every channel connected</small></span>
+                  </a>
+                  <a href="#integrations" onClick={() => setProductMenu(false)}>
+                    <Workflow size={19} />
+                    <span>Integrations<small>Fit into the way you work</small></span>
+                  </a>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <a href="#industries" className="nav-item">Industries</a>
+          <a href="#how-it-works" className="nav-item">How it works</a>
+          <a href="#team" className="nav-item">{isScrolled ? "Agents" : "Meet the agents"}</a>
+        </nav>
+
+        {/* Desktop CTA Button (Right in Initial State, Img 1 style) */}
+        <AnimatePresence initial={false}>
+          {!isScrolled && (
+            <motion.div
+              key="nav-cta"
+              className="nav-cta-container"
+              initial={{ opacity: 0, width: 0, scale: 0.95 }}
+              animate={{ opacity: 1, width: 'auto', scale: 1 }}
+              exit={{ opacity: 0, width: 0, scale: 0.95 }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <DemoLink className="nav-pill-cta">Book a demo</DemoLink>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Mobile Nav Controls: Starting State (Img 1 style) */}
+        <AnimatePresence initial={false}>
+          {!isScrolled && (
+            <motion.div
+              key="mobile-initial"
+              className="nav-mobile-initial"
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <DemoLink className="nav-pill-cta-mobile">Book demo</DemoLink>
+              <button
+                className="nav-toggle-btn"
+                ref={mobileRef}
+                type="button"
+                aria-label={menu ? 'Close navigation' : 'Open navigation'}
+                aria-expanded={menu}
+                aria-controls={menu ? "mobile-nav" : undefined}
+                onClick={() => setMenu(!menu)}
+                suppressHydrationWarning
+              >
+                {menu ? <X size={20} /> : <Menu size={20} />}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Mobile Nav Controls: Scrolled State (Img 2 style) */}
+        <AnimatePresence initial={false}>
+          {isScrolled && (
+            <motion.div
+              key="mobile-scrolled"
+              className="nav-mobile-scrolled"
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <a href="#top" onClick={scrollToTop} className="nav-mobile-link cursor-pointer">Home</a>
+              <a href="#platform" className="nav-mobile-link">Platform</a>
+              <a href="#team" className="nav-mobile-link">Agents</a>
+              <button
+                className="nav-mobile-toggle"
+                type="button"
+                aria-label={menu ? 'Close navigation' : 'Open navigation'}
+                aria-expanded={menu}
+                onClick={() => setMenu(!menu)}
+              >
+                {menu ? <X size={17} /> : <Menu size={17} />}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      <section className="section container !pt-8 sm:!pt-10 md:!pt-14 -mt-12 sm:-mt-16 md:-mt-28 relative z-30" id="platform"><Reveal className="section-heading"><span className="eyebrow">A LITTLE LESS BUSYWORK. A LOT MORE POSSIBILITY.</span><h2>A human touch.<br/><span>At a whole new scale.</span></h2><p>Your best customer experience shouldn’t depend on<br className="desktop-break"/> whether someone is free to pick up the phone.</p></Reveal>
-        <div className="feature-grid"><Reveal className="feature-card feature-large"><div className="card-label"><Headphones size={20}/> Voice agents</div><h3>Every call deserves<br/>a great conversation.</h3><p>Natural conversations that listen, understand, and guide your customers to the next step.</p><div className="conversation-visual"><span className="conversation-status"><span/> A sample conversation</span><div className="chat-bubble customer">Hi, can I book an appointment?</div><div className="chat-bubble agent">Absolutely. Let’s find a time that works for you.<span className="typing"><i/><i/><i/></span></div><div className="conversation-wave"><Mic size={18}/><Wave active/><img className="inline-brand" src="/images/virtualvox-brand.png" alt="VIRTUALVOX" width="2080" height="756"/></div></div></Reveal>
-          <Reveal className="feature-card" delay={0.1}><div className="card-label"><MessageCircle size={20}/> Text agents</div><h3>Keep the conversation<br/>going. Everywhere.</h3><p>Helpful replies and consistent context, from the first hello to the follow-up.</p><div className="message-visual"><div><BrandIcon /><span>VIRTUALVOX<small>Your conversation assistant</small></span><CircleCheck size={18}/></div><p>Your appointment request is ready.<br/>Would tomorrow at 10 am work?</p><span className="reply-chip">That works for me <Check size={14}/></span></div></Reveal>
-          <Reveal className="feature-card compact"><div className="icon-box"><Workflow/></div><h3>Fits your workflow.</h3><p>Move from a conversation to a useful next step with connected tools and clear handoffs.</p><div className="workflow-visual"><Phone/><span/><CalendarDays/><span/><CircleCheck/></div></Reveal>
-          <Reveal className="feature-card compact" delay={0.1}><div className="icon-box"><ShieldCheck/></div><h3>You stay in control.</h3><p>Define the knowledge, boundaries, and moments when your human team takes over.</p><div className="control-tags"><span><Check size={14}/> Your knowledge</span><span><Check size={14}/> Human handoff</span></div></Reveal>
-        </div>
+      {/* Floating Mobile Drawer */}
+      <AnimatePresence>
+        {menu && (
+          <motion.nav
+            className="mobile-nav-drawer"
+            id="mobile-nav"
+            aria-label="Mobile navigation"
+            initial={{ opacity: 0, y: -12, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -12, scale: 0.95 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <a
+              href="#top"
+              onClick={(e) => {
+                scrollToTop(e);
+                setMenu(false);
+              }}
+              className="cursor-pointer"
+            >
+              Home
+            </a>
+            <a href="#platform" onClick={() => setMenu(false)}>Platform & Agents</a>
+            <a href="#industries" onClick={() => setMenu(false)}>Industries</a>
+            <a href="#how-it-works" onClick={() => setMenu(false)}>How it works</a>
+            <a href="#team" onClick={() => setMenu(false)}>Meet the agents</a>
+            <a href="#contact" onClick={() => setMenu(false)} className="drawer-cta">Book a demo</a>
+          </motion.nav>
+        )}
+      </AnimatePresence>
+    </header>
+    <main id="main" className="pt-2 sm:pt-4">
+      <div ref={heroRef} id="hero-section" className="relative w-full">
+        <RobotHero
+          backgroundText="VIRTUALVOX"
+          eyebrow="HUMAN CONNECTION. REIMAGINED."
+          title="AI voice and text agents."
+          subtitle="Never miss another opportunity. Answer every call, respond in seconds, and make every conversation count."
+          badges={["Always ready", "Made for your business", "Built around people"]}
+          color="#ede8f7"
+          pantallaColor="#7c3aed"
+          pantallaBrillo={1.4}
+          showNav={false}
+        />
+      </div>
+      <div className="relative z-20 pt-2 sm:pt-4">
+        <VirtualVoxHeroExpansion />
+      </div>
+
+      <section className="container py-6 sm:py-10 relative z-30" id="platform">
+        <Reveal delay={0.06} className="w-full">
+          <CardHandGallery cards={platformCards} className="max-w-6xl mx-auto" />
+        </Reveal>
       </section>
 
       <section className="demo-section" id="demo"><div className="container demo-layout"><Reveal className="demo-copy"><span className="eyebrow">DON’T JUST TAKE OUR WORD FOR IT</span><h2>It starts with<br/>a simple <em>hello.</em></h2><p>A little warmth. A natural rhythm. A conversation that feels effortless. Explore a sample of the experience.</p><div className="sample-selector" aria-label="Choose a sample">{industries.map((item,index)=><button key={item.name} type="button" suppressHydrationWarning className={sample===index?'selected':''} onClick={()=>{stopSample();setSample(index);}}>{item.name}</button>)}</div><span className="sample-disclaimer">Scripted audio preview · No microphone required</span></Reveal>
-        <Reveal className="audio-card"><div className="audio-card-top"><BrandIcon /><div><strong>{agents[activeAgent].name} from VIRTUALVOX</strong><small>Interactive voice preview</small></div><AudioLines size={23}/></div><div className="audio-orb"><div/><div/><Mic size={38}/></div><Wave active={speaking}/><button className="button button-dark play-button" type="button" suppressHydrationWarning onClick={()=>playSample()} aria-label={speaking?'Stop sample':'Play sample'}>{speaking?<Pause size={17}/>:<Play size={17} fill="currentColor"/>}{speaking?'Stop sample':'Play sample'}</button><div className="sample-transcript" aria-live="polite"><p><span>Customer</span>{industries[sample].question}</p><p><span>{agents[activeAgent].name}</span>{industries[sample].answer}</p></div>{audioMessage&&<p className="audio-error" role="status">{audioMessage}</p>}</Reveal></div></section>
+        <Reveal className="audio-card"><AnimatedVoiceGlobe active={speaking} className="my-1 sm:my-2"/><Wave active={speaking}/><button className="button play-button" type="button" suppressHydrationWarning onClick={()=>playSample()} aria-label={speaking?'Stop sample':'Play sample'}>{speaking?<Pause size={17}/>:<Play size={17} fill="currentColor"/>}{speaking?'Stop sample':'Play sample'}</button><div className="sample-transcript" aria-live="polite"><p><span>Customer</span>{industries[sample].question}</p><p><span>{agents[activeAgent].name}</span>{industries[sample].answer}</p></div>{audioMessage&&<p className="audio-error" role="status">{audioMessage}</p>}</Reveal></div></section>
 
       <Reveal delay={0.08}>
         <MobbinIntegrations
@@ -160,21 +462,15 @@ export default function Home() {
         />
       </Reveal>
 
-      <section className="section container" id="industries">
-        <Reveal className="section-heading left-heading">
-          <span className="eyebrow">BUILT AROUND YOUR WORLD</span>
-          <h2>A new voice.<br/><span>For the work you do.</span></h2>
-        </Reveal>
-        <Reveal delay={0.1}>
-          <IndustryShowcase
-            onPlayVoice={(idx) => {
-              stopSample();
-              playSample(idx);
-            }}
-            isSpeaking={speaking}
-          />
-        </Reveal>
-      </section>
+      <div id="industries" className="relative w-full">
+        <IndustryStoryScroll
+          onPlayVoice={(idx) => {
+            stopSample();
+            playSample(idx);
+          }}
+          isSpeaking={speaking}
+        />
+      </div>
 
       <Reveal delay={0.06}>
         <VapiHowItWorks />

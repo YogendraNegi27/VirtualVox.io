@@ -349,7 +349,7 @@ export function CinematicHero({
       <div className="bg-grid-theme absolute inset-0 z-0 pointer-events-none opacity-60" aria-hidden="true" />
 
       {/* BACKGROUND LAYER 1: Hero Texts */}
-      <div className="hero-text-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-full max-w-5xl px-4 sm:px-6 top-[44%] sm:top-1/2 -translate-y-1/2 will-change-transform">
+      <div className="hero-text-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-full max-w-5xl px-4 sm:px-6 top-[20%] sm:top-[23%] md:top-[25%] -translate-y-1/2 will-change-transform">
         <span className="eyebrow mb-1.5 sm:mb-2 uppercase tracking-widest text-[10px] sm:text-[11px] font-bold text-[#7c3aed]">
           Enterprise Voice AI Engine
         </span>

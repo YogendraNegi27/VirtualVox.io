@@ -29,15 +29,20 @@ const sharedHeartCurve = new HeartCurve();
 function ResponsiveGroup({
   children,
   scale = 1,
+  posY,
 }: {
   children: React.ReactNode;
   scale?: number;
+  posY?: number;
 }) {
   const { viewport } = useThree();
   const isMobile = viewport.width < 2.8;
-  const s = Math.min(1.15, viewport.width / (isMobile ? 2.85 : 3.4)) * scale;
-  const posY = isMobile ? 0.08 : 0;
-  return <group position={[0, posY, 0]} scale={s}>{children}</group>;
+  const isTablet = viewport.width >= 2.8 && viewport.width < 4.0;
+  const s = Math.min(1.15, viewport.width / (isMobile ? 2.75 : 3.3)) * scale;
+  // Positioned so there is a clean, graceful ~20px-35px gap below the badges without touching
+  const defaultPosY = isMobile ? -0.16 : isTablet ? -0.19 : -0.22;
+  const finalPosY = posY !== undefined ? posY : defaultPosY;
+  return <group position={[0, finalPosY, 0]} scale={s}>{children}</group>;
 }
 
 function GlassCapsule({
@@ -709,6 +714,7 @@ export interface RobotHeroProps {
   onCtaClick?: () => void;
   color?: string;
   scale?: number;
+  robotPosY?: number;
   pantallaColor?: string;
   pantallaBrillo?: number;
   blinkCycle?: number;
@@ -832,6 +838,7 @@ export function RobotHero({
   onCtaClick,
   color = "#ede8f7",
   scale = 1.05,
+  robotPosY,
   pantallaColor = "#7c3aed",
   pantallaBrillo = 1.35,
   blinkCycle = 3.0,
@@ -881,22 +888,22 @@ export function RobotHero({
   return (
     <section
       ref={containerRef}
-      className={`relative w-full h-[calc(100svh-var(--header,64px))] min-h-[460px] sm:min-h-[640px] max-h-[560px] sm:max-h-[860px] overflow-hidden flex flex-col justify-between ${className}`}
+      className={`relative w-full h-[calc(100svh-var(--header,64px))] min-h-[500px] sm:min-h-[560px] md:min-h-[620px] max-h-[660px] sm:max-h-[740px] md:max-h-[780px] overflow-hidden flex flex-col justify-between ${className}`}
       style={{
         background: `linear-gradient(180deg, ${entorno.fondoArriba} 0%, #fefdff 35%, ${entorno.fondoMedio} 75%, ${entorno.fondoAbajo} 100%)`,
       }}
     >
-      {/* Background Big Typography */}
+      {/* Background Big Typography - balanced position framing the lowered robot */}
       <div
         className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none"
         style={{ zIndex: 0 }}
       >
         <span
-          className="font-black whitespace-nowrap tracking-tight select-none transform translate-y-4 sm:translate-y-14"
+          className="font-black whitespace-nowrap tracking-tight select-none transform translate-y-10 sm:translate-y-14 md:translate-y-18 lg:translate-y-20"
           style={{
             color: "#7c3aed",
             opacity: 0.08,
-            fontSize: "clamp(3.5rem, 16vw, 15rem)",
+            fontSize: "clamp(3rem, 14vw, 13rem)",
             lineHeight: 1,
             fontFamily: "'Manrope', Arial, sans-serif",
           }}
@@ -943,7 +950,7 @@ export function RobotHero({
             <pointLight position={[0, 4, 3]} intensity={0.9} color="#f5f3ff" />
             <pointLight position={[-4, 1, -2]} intensity={0.6} color="#e9d5ff" />
 
-            <ResponsiveGroup scale={scale}>
+            <ResponsiveGroup scale={scale} posY={robotPosY}>
               <ContactShadows
                 position={[0, -1.15, 0]}
                 opacity={entorno.sombraOpacidad}
@@ -996,10 +1003,10 @@ export function RobotHero({
         </div>
       )}
 
-      {/* Top Hero Copy & CTA Overlay: Perfectly Aligned with Navbar */}
-      <div className="relative z-20 w-full max-w-[1160px] mx-auto px-4 sm:px-8 pt-5 sm:pt-8 md:pt-12 text-center pointer-events-none">
+      {/* Top Hero Copy & CTA Overlay: Perfectly balanced padding and margins */}
+      <div className="relative z-20 w-full max-w-[1160px] mx-auto px-4 sm:px-8 pt-4 sm:pt-6 md:pt-8 text-center pointer-events-none">
         {eyebrow && (
-          <div className="eyebrow pointer-events-auto mb-2 sm:mb-4 text-[10px] sm:text-xs">
+          <div className="eyebrow pointer-events-auto mb-1.5 sm:mb-2.5 text-[10px] sm:text-xs">
             <AudioLines size={14} className="sm:w-[15px] sm:h-[15px]" />
             <span>{eyebrow}</span>
           </div>
@@ -1012,15 +1019,15 @@ export function RobotHero({
           </span>
         </h1>
 
-        <p className="mt-2.5 sm:mt-3.5 max-w-sm sm:max-w-xl mx-auto text-xs sm:text-sm md:text-base text-[#697084] leading-relaxed px-2">
+        <p className="mt-2 sm:mt-3 max-w-[310px] sm:max-w-xl mx-auto text-[11px] sm:text-sm md:text-base text-[#697084] leading-relaxed px-2">
           {subtitle}
         </p>
 
-        {/* Hero Trust Badges */}
+        {/* Hero Trust Badges - clean, tight margin that leaves a balanced ~20px-30px gap above the robot */}
         {badges && badges.length > 0 && (
-          <div className="hero-note mt-3 sm:mt-5 pointer-events-auto flex flex-wrap items-center justify-center gap-2 sm:gap-3 max-w-xs sm:max-w-none mx-auto text-[10px] sm:text-xs">
+          <div className="hero-note !mt-2.5 sm:!mt-3.5 !mb-0 pointer-events-auto flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 sm:gap-3 max-w-[320px] sm:max-w-none mx-auto text-[10px] sm:text-xs text-[#7d758c]">
             {badges.map((b, i) => (
-              <span key={b} className="inline-flex items-center gap-2 sm:gap-3">
+              <span key={b} className="inline-flex items-center gap-1.5 sm:gap-2.5">
                 <span>{b}</span>
                 {i < badges.length - 1 && <i />}
               </span>
@@ -1031,7 +1038,7 @@ export function RobotHero({
 
       {/* Subtle Bottom Ambient Gradient Anchor to next section */}
       <div
-        className="relative z-20 w-full h-8 bg-gradient-to-t from-white/90 to-transparent pointer-events-none"
+        className="relative z-20 w-full h-4 sm:h-6 bg-gradient-to-t from-white/90 to-transparent pointer-events-none"
         aria-hidden="true"
       />
     </section>
